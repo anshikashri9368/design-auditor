@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UI Design Auditor</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f4f7;--panel:#fff;--ink:#101820;--mute:#5b6674;--line:#d9dee5;--acc:#e8590c;--crit:#c92a2a;--maj:#d9730d;--min:#2f6fdb;--ok:#2b8a3e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e131a;--panel:#161d27;--ink:#e8ecf1;--mute:#93a0b0;--line:#27323f;--acc:#ff8a4c;--crit:#ff6b6b;--maj:#ffa94d;--min:#74a7ff;--ok:#69db7c}}
+:root[data-theme="dark"]{--bg:#0e131a;--panel:#161d27;--ink:#e8ecf1;--mute:#93a0b0;--line:#27323f;--acc:#ff8a4c;--crit:#ff6b6b;--maj:#ffa94d;--min:#74a7ff;--ok:#69db7c}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+h1{font-size:18px;margin:0;font-weight:600}h1 span{color:var(--acc)}
+main{display:grid;grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr);gap:16px;padding:16px;max-width:1500px;margin:0 auto}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card>h2{margin:0;padding:12px 16px;font-size:14px;font-weight:600;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pad{padding:14px 16px}
+button,select,input{font:inherit;color:var(--ink)}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer;min-height:36px}
+button:hover{border-color:var(--ink)}button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.issue:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+textarea{width:100%;height:260px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;font:12.5px/1.5 "IBM Plex Mono",monospace;color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.score{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ring{position:relative;width:110px;height:110px;flex:none}
+.ring svg{transform:rotate(-90deg)}.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;font-weight:600}
+.bars{flex:1;min-width:180px;display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:96px 1fr 34px;gap:8px;align-items:center;font-size:13px}
+.bar i{display:block;height:7px;border-radius:4px;background:var(--line);overflow:hidden}.bar i u{display:block;height:100%;background:var(--acc)}
+.tabs{display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{border:0;background:none;color:var(--mute)}.tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border-radius:99px;padding:3px 11px;min-height:30px;font-size:13px}.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.issue{display:block;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid var(--min);border-radius:6px;padding:10px 12px;margin-bottom:8px;background:var(--panel);cursor:pointer}
+.issue.critical{border-left-color:var(--crit)}.issue.major{border-left-color:var(--maj)}
+.issue b{font-weight:600}.issue small{display:block;color:var(--mute);margin-top:2px}
+.issue .fix{margin-top:6px;font-size:13px}.issue code{font:12px "IBM Plex Mono",monospace;background:var(--bg);padding:1px 5px;border-radius:4px;word-break:break-all}
+.sw{display:flex;flex-wrap:wrap;gap:8px}.sw div{width:92px;font-size:12px}.sw i{display:block;height:44px;border-radius:6px;border:1px solid var(--line);margin-bottom:3px}
+.frame{background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/16px 16px;padding:12px;overflow:auto;border-top:1px solid var(--line);text-align:center;border-radius:0 0 8px 8px}
+iframe{border:1px solid var(--line);background:#fff;height:420px;max-width:100%;transition:width .2s}
+.empty{color:var(--mute);padding:20px 0;text-align:center}
+.cc{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cc label{font-size:13px;color:var(--mute);display:grid;gap:4px}.cc input[type=color]{width:100%;height:42px;padding:2px}
+.res{margin-top:12px;border-radius:8px;padding:16px;font-size:15px}
+.res strong{font-size:28px;display:block}
+.pf span{display:inline-block;margin:4px 6px 0 0;padding:2px 9px;border-radius:99px;font-size:12px;border:1px solid var(--line)}.pf .y{color:var(--ok);border-color:var(--ok)}.pf .n{color:var(--crit);border-color:var(--crit)}
+</style>
+</head>
+<body>
+<header>
+  <h1>UI Design <span>Auditor</span></h1>
+  <div class="row">
+    <label class="mono" style="font-size:12px;color:var(--mute)">Viewport
+      <select id="vp"><option value="375">Phone 375</option><option value="768">Tablet 768</option><option value="1100" selected>Desktop 1100</option></select>
+    </label>
+    <button id="theme">Toggle theme</button>
+  </div>
+</header>
+<main>
+  <section class="card">
+    <h2>Markup to audit <span class="row"><button id="sample">Load sample</button><button id="file">Open .html</button></span></h2>
+    <div class="pad">
+      <textarea id="src" spellcheck="false" aria-label="HTML and CSS to audit" placeholder="Paste a full HTML page or a component with inline styles / a style tag"></textarea>
+      <div class="row" style="margin-top:10px"><button class="pri" id="run">Run audit</button><button id="copy">Copy report JSON</button><span id="msg" class="mono" style="font-size:12px;color:var(--mute)"></span></div>
+      <div class="row" style="margin-top:10px"><input id="url" type="url" placeholder="https://example.com" aria-label="URL to audit" style="flex:1;min-width:160px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:var(--bg)"><button id="aurl">Audit URL</button><button id="asrv">Audit on server</button></div>
+      <input type="file" id="fi" accept=".html,.htm,text/html" hidden>
+    </div>
+    <div class="pad" style="border-top:1px solid var(--line)">
+      <div class="score"><div class="ring"><svg width="110" height="110" viewBox="0 0 110 110"><circle cx="55" cy="55" r="48" fill="none" stroke="var(--line)" stroke-width="9"/><circle id="arc" cx="55" cy="55" r="48" fill="none" stroke="var(--acc)" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 302"/></svg><b id="sc">–</b></div><div class="bars" id="bars"></div></div>
+    </div>
+    <div class="frame"><iframe id="pv" title="Live preview" sandbox="allow-same-origin"></iframe></div>
+  </section>
+  <section class="card">
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="issues">Issues <span id="cnt" class="mono"></span></button><button role="tab" aria-selected="false" data-t="tokens">Design tokens</button><button role="tab" aria-selected="false" data-t="contrast">Contrast lab</button><button role="tab" aria-selected="false" data-t="history">History</button></div>
+    <div class="pad" id="t-issues"></div>
+    <div class="pad" id="t-tokens" hidden></div>
+    <div class="pad" id="t-history" hidden></div>
+    <div class="pad" id="t-contrast" hidden>
+      <div class="cc"><label>Text colour<input type="color" id="c1" value="#767676"></label><label>Background<input type="color" id="c2" value="#ffffff"></label></div>
+      <div class="res" id="cres"></div>
+    </div>
+  </section>
+</main>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const SAMPLE=`<!DOCTYPE html><html><head><title>Bloom Coffee</title><style>
+body{font-family:Georgia,serif;margin:0;background:#fff;color:#333}
+.nav{background:#2d6a4f;padding:13px}.nav a{color:#74c69d;font-size:11px;margin-right:9px;font-family:Arial}
+h1{font-size:40px;margin:22px}h3{font-size:18px;margin:21px;color:#aaa}
+.hero{background:#f4a261;padding:30px}.hero p{color:#fff;font-size:15px;font-family:Verdana;margin:7px 22px}
+.btn{background:#e76f51;color:#fff;border:0;padding:3px 6px;font-size:12px;font-family:Courier}
+.card{margin:13px 21px;padding:17px;border:1px solid #ddd;line-height:1.1;font-family:Trebuchet MS}
+input{margin:11px 22px;padding:5px}
+</style></head><body>
+<div class="nav"><a href="#">Menu</a><a href="#">Shop</a><a href="#">here</a></div>
+<h1>Bloom Coffee</h1>
+<div class="hero"><p>Small-batch roasts, delivered weekly to your door.</p><button class="btn">Buy</button> <button class="btn"></button></div>
+<h3>Our beans</h3>
+<div class="card"><img src="x.png" width="80" height="60"><p>Ethiopia Guji. Notes of jasmine, peach and bergamot, roasted on Mondays.</p><a href="#">click here</a></div>
+<input type="email" placeholder="Your email">
+</body></html>`;
+// ---------- colour math ----------
+const parse=s=>{const m=(s||'').match(/rgba?\(([^)]+)\)/);if(!m)return null;const p=m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat);return[p[0],p[1],p[2],p[3]??1]};
+const lum=([r,g,b])=>{const f=c=>{c/=255;return c<=.03928?c/12.92:((c+.055)/1.055)**2.4};return .2126*f(r)+.7152*f(g)+.0722*f(b)};
+const ratio=(a,b)=>{const x=lum(a),y=lum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+const hex=c=>'#'+c.slice(0,3).map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
+const unhex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function bgOf(el,win){const L=[];for(let e=el;e&&e.nodeType===1;e=e.parentElement){const c=parse(win.getComputedStyle(e).backgroundColor);if(c&&c[3]>0){L.push(c);if(c[3]>=1)break}}
+ let base=[255,255,255];for(const c of L.reverse())base=base.map((v,i)=>i<3?c[i]*c[3]+v*(1-c[3]):v);return base}
+const sel=el=>{let s=el.tagName.toLowerCase();if(el.id)s+='#'+el.id;else if(el.classList.length)s+='.'+[...el.classList].slice(0,2).join('.');return s};
+// ---------- audit engine ----------
+let ISSUES=[],TOKENS={},FILTER={sev:'all',q:''};
+function audit(doc,win){
+ const out=[],tok={colors:{},bgs:{},fonts:{},sizes:{},off:0,sp:0};let n=0;
+ const add=(sev,cat,title,detail,fix,el)=>{let id=null;if(el){id='a'+(n++);el.setAttribute('data-aud',id)}out.push({sev,cat,title,detail,fix,id,target:el?sel(el):''})};
+ const els=[...doc.body.querySelectorAll('*')].filter(e=>!['SCRIPT','STYLE','BR'].includes(e.tagName));
+ const hasText=e=>[...e.childNodes].some(c=>c.nodeType===3&&c.textContent.trim());
+ const vague=/^(click here|here|read more|more|link|learn more|this)$/i;
+ // document level
+ if(!doc.title.trim())add('major','Structure','Missing page title','No <title> element found.','Add a short, unique <title> so screen readers and tabs identify the page.');
+ if(!doc.documentElement.getAttribute('lang'))add('major','Accessibility','Missing language attribute','<html> has no lang.','Set <html lang="en"> (or the right code) so assistive tech pronounces text correctly.');
+ if(!doc.querySelector('meta[name=viewport]'))add('minor','Layout','No viewport meta','Responsive scaling is not declared.','Add <meta name="viewport" content="width=device-width, initial-scale=1">.');
+ const h1=doc.querySelectorAll('h1');if(h1.length===0)add('major','Structure','No <h1> heading','Page has no top-level heading.','Add one descriptive h1.');if(h1.length>1)add('minor','Structure','Multiple <h1> headings',h1.length+' h1 elements found.','Keep a single h1 and use h2–h6 for sections.',h1[1]);
+ let prev=0;doc.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h=>{const l=+h.tagName[1];if(prev&&l>prev+1)add('minor','Structure','Skipped heading level','Jumps from h'+prev+' to h'+l+'.','Use consecutive heading levels.',h);prev=l});
+ const heads=[...doc.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h=>parseFloat(win.getComputedStyle(h).fontSize));
+ for(let i=1;i<heads.length;i++)if(heads[i]>heads[i-1]&&doc.querySelectorAll('h1,h2,h3,h4,h5,h6')[i].tagName>doc.querySelectorAll('h1,h2,h3,h4,h5,h6')[i-1].tagName){add('minor','Typography','Heading size inverts hierarchy',`A lower-level heading (${heads[i]}px) is larger than the one before (${heads[i-1]}px).`,'Size headings in descending order of level.',doc.querySelectorAll('h1,h2,h3,h4,h5,h6')[i]);break}
+ els.forEach(el=>{
+  const cs=win.getComputedStyle(el),fs=parseFloat(cs.fontSize),fw=parseInt(cs.fontWeight)||400,tag=el.tagName;
+  const r=el.getBoundingClientRect();
+  // spacing tokens
+  ['marginTop','marginBottom','marginLeft','marginRight','paddingTop','paddingBottom','paddingLeft','paddingRight'].forEach(p=>{const v=Math.round(parseFloat(cs[p]));if(v>0){tok.sp++;if(v%4&&v>2)tok.off++}});
+  if(hasText(el)){
+   const fg=parse(cs.color),bg=bgOf(el,win);
+   const fam=cs.fontFamily.split(',')[0].replace(/["']/g,'').trim();
+   tok.fonts[fam]=(tok.fonts[fam]||0)+1;tok.sizes[Math.round(fs)]=(tok.sizes[Math.round(fs)]||0)+1;
+   if(fg){const k=hex(fg);tok.colors[k]=(tok.colors[k]||0)+1;const kb=hex(bg);tok.bgs[kb]=(tok.bgs[kb]||0)+1;
+    const cr=ratio(fg,bg),large=fs>=24||(fs>=18.66&&fw>=700),need=large?3:4.5;
+    if(cr<need)add(cr<need*.67?'critical':'major','Accessibility','Low colour contrast',`${hex(fg)} on ${hex(bg)} = ${cr.toFixed(2)}:1 (needs ${need}:1) at ${Math.round(fs)}px.`,'Darken the text or lighten the background until the ratio reaches '+need+':1.',el)}
+   if(fs<12)add('major','Typography','Text too small',`${Math.round(fs)}px is below the 12px floor.`,'Use at least 14px for body text; 12px only for captions.',el);
+   const lh=parseFloat(cs.lineHeight)/fs;if(!isNaN(lh)&&['P','LI','DIV','SPAN','A'].includes(tag)&&el.textContent.trim().length>60&&lh<1.3)add('minor','Typography','Tight line height',`Line height is ${lh.toFixed(2)}× on multi-line text.`,'Set line-height between 1.4 and 1.6 for body copy.',el);
+   if(tag==='P'&&r.width>0&&el.textContent.length>0){const cpl=r.width/(fs*.5);if(cpl>85)add('minor','Typography','Line length too long',`About ${Math.round(cpl)} characters per line.`,'Cap the measure near 60–75ch with max-width: 70ch.',el)}
+  }
+  // interactive
+  if(['A','BUTTON','INPUT','SELECT','TEXTAREA'].includes(tag)||el.getAttribute('role')==='button'){
+   if(tag!=='INPUT'||!['hidden'].includes(el.type)){
+    if(r.width>0&&(r.width<44||r.height<44)&&(tag!=='A'||hasText(el)))add(r.width<24||r.height<24?'major':'minor','Layout','Touch target too small',`${Math.round(r.width)}×${Math.round(r.height)}px; recommended minimum is 44×44px.`,'Add padding or min-height/min-width: 44px.',el);
+    const name=(el.textContent||'').trim()||el.getAttribute('aria-label')||el.getAttribute('title')||(tag==='INPUT'&&(el.value||el.getAttribute('placeholder')))||el.querySelector('img[alt]:not([alt=""])');
+    if(!name&&tag!=='SELECT'&&tag!=='TEXTAREA')add('critical','Accessibility','Control has no accessible name','Button or link has no text, aria-label or title.','Add visible text or an aria-label describing the action.',el);
+   }
+   if(tag==='A'&&vague.test(el.textContent.trim()))add('minor','Accessibility','Vague link text',`“${el.textContent.trim()}” says nothing out of context.`,'Describe the destination, e.g. “View roast schedule”.',el);
+   if(tag==='A'&&!el.getAttribute('href'))add('minor','Accessibility','Link without href','Anchor is not keyboard focusable.','Add an href or use a <button>.',el);
+  }
+  if(['INPUT','SELECT','TEXTAREA'].includes(tag)&&el.type!=='hidden'&&el.type!=='submit'&&el.type!=='button'){
+   const lab=el.getAttribute('aria-label')||el.getAttribute('aria-labelledby')||(el.id&&doc.querySelector(`label[for="${el.id}"]`))||el.closest('label');
+   if(!lab)add('major','Accessibility','Form field has no label','Placeholder text alone disappears while typing and is not a label.','Add a <label for> or aria-label.',el)}
+  if(tag==='IMG'){
+   if(!el.hasAttribute('alt'))add('critical','Accessibility','Image missing alt text','No alt attribute.','Describe the image, or use alt="" if purely decorative.',el);
+   if(!el.hasAttribute('width')&&!el.hasAttribute('height')&&!cs.aspectRatio.match(/\d/)&&!el.style.height)add('minor','Layout','Image has no reserved size','Missing width/height can cause layout shift.','Set width and height attributes.',el)}
+  if(r.right>win.innerWidth+1&&r.width>0&&tag!=='HTML')add('major','Layout','Element overflows viewport',`Right edge is ${Math.round(r.right-win.innerWidth)}px past the ${win.innerWidth}px viewport.`,'Use max-width:100% and flexible layouts.',el);
+  if(cs.outlineStyle==='none'&&(tag==='A'||tag==='BUTTON')&&!el.matches(':focus-visible')&&/outline\s*:\s*(none|0)/.test(el.getAttribute('style')||''))add('major','Accessibility','Focus outline removed','Inline style hides the focus indicator.','Provide a visible :focus-visible style instead.',el);
+ });
+ // consistency
+ const fams=Object.keys(tok.fonts),sizes=Object.keys(tok.sizes);
+ if(fams.length>3)add('minor','Consistency','Too many font families',`${fams.length} families: ${fams.join(', ')}.`,'Limit to one or two typefaces.');
+ if(sizes.length>7)add('minor','Consistency','Type scale is fragmented',`${sizes.length} distinct sizes in use.`,'Adopt a modular scale (e.g. 14/16/20/24/32/40).');
+ if(tok.sp>8&&tok.off/tok.sp>.25)add('minor','Consistency','Spacing is off a 4px grid',`${Math.round(tok.off/tok.sp*100)}% of margin/padding values are not multiples of 4.`,'Use a spacing scale: 4, 8, 12, 16, 24, 32.');
+ if(Object.keys(tok.colors).length>8)add('minor','Consistency','Many text colours',`${Object.keys(tok.colors).length} distinct text colours.`,'Reduce to a small palette of semantic tokens.');
+ TOKENS=tok;return out}
+// ---------- scoring ----------
+const W={critical:9,major:4,minor:1.5},CATS=['Accessibility','Typography','Layout','Structure','Consistency'];
+function score(list){const by={};CATS.forEach(c=>by[c]=100);let tot=100;
+ list.forEach(i=>{const w=W[i.sev];tot-=w;by[i.cat]=Math.max(0,by[i.cat]-w*2.2)});
+ return{total:Math.max(0,Math.round(tot)),by}}
+function renderScore(s){$('#sc').textContent=s.total;const c=302*s.total/100;$('#arc').setAttribute('stroke-dasharray',c+' 302');
+ $('#arc').setAttribute('stroke',s.total>=80?'var(--ok)':s.total>=55?'var(--maj)':'var(--crit)');
+ $('#bars').innerHTML=CATS.map(c=>`<div class="bar"><span>${c}</span><i><u style="width:${Math.round(s.by[c])}%"></u></i><span class="mono">${Math.round(s.by[c])}</span></div>`).join('')}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderIssues(){
+ const box=$('#t-issues'),order={critical:0,major:1,minor:2};
+ const list=ISSUES.filter(i=>(FILTER.sev==='all'||i.sev===FILTER.sev)&&(!FILTER.q||(i.title+i.detail+i.cat+i.target).toLowerCase().includes(FILTER.q))).sort((a,b)=>order[a.sev]-order[b.sev]);
+ const cnt=s=>ISSUES.filter(i=>i.sev===s).length;
+ $('#cnt').textContent='('+ISSUES.length+')';
+ box.innerHTML=`<div class="chips">${['all','critical','major','minor'].map(s=>`<button class="chip" data-s="${s}" aria-pressed="${FILTER.sev===s}">${s==='all'?'All '+ISSUES.length:s+' '+cnt(s)}</button>`).join('')}<input id="q" type="search" placeholder="Filter issues" value="${esc(FILTER.q)}" aria-label="Filter issues" style="flex:1;min-width:120px;border:1px solid var(--line);border-radius:6px;padding:4px 10px;background:var(--bg)"></div>`+
+ (list.length?list.map((i,k)=>`<button class="issue ${i.sev}" data-id="${i.id||''}"><b>${esc(i.title)}</b> <span class="mono" style="font-size:12px;color:var(--mute)">${i.cat} · ${i.sev}</span><small>${esc(i.detail)}</small>${i.target?`<small>Element <code>${esc(i.target)}</code> — select to highlight in preview</small>`:''}<div class="fix">Fix: ${esc(i.fix)}</div></button>`).join(''):'<div class="empty">'+(ISSUES.length?'No issues match this filter.':'No issues found. Nice work.')+'</div>');
+ $$('.chip').forEach(b=>b.onclick=()=>{FILTER.sev=b.dataset.s;renderIssues()});
+ const q=$('#q');q.oninput=()=>{FILTER.q=q.value.toLowerCase();const p=q.selectionStart;renderIssues();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
+ $$('.issue').forEach(b=>b.onclick=()=>highlight(b.dataset.id))}
+function highlight(id){const d=$('#pv').contentDocument;if(!d)return;d.querySelectorAll('[data-hl]').forEach(e=>e.removeAttribute('data-hl'));
+ if(!id)return;const el=d.querySelector(`[data-aud="${id}"]`);if(el){el.setAttribute('data-hl','1');el.scrollIntoView({block:'center',behavior:'smooth'});$('#pv').scrollIntoView({block:'nearest',behavior:'smooth'})}}
+function renderTokens(){const t=TOKENS,top=(o,n=10)=>Object.entries(o||{}).sort((a,b)=>b[1]-a[1]).slice(0,n);
+ const sw=a=>a.length?`<div class="sw">${a.map(([c,n])=>`<div><i style="background:${c}"></i><span class="mono">${c}</span> ×${n}</div>`).join('')}</div>`:'<div class="empty">Run an audit first.</div>';
+ const list=o=>top(o).map(([k,n])=>`<span class="mono" style="display:inline-block;margin:3px 10px 3px 0">${esc(k)} <span style="color:var(--mute)">×${n}</span></span>`).join('')||'–';
+ $('#t-tokens').innerHTML=`<h3 style="margin-top:0">Text colours</h3>${sw(top(t.colors))}<h3>Backgrounds</h3>${sw(top(t.bgs))}<h3>Font families</h3>${list(t.fonts)}<h3>Font sizes (px)</h3>${list(t.sizes)}<h3>Spacing grid</h3><p style="margin:0">${t.sp?Math.round(100-t.off/t.sp*100)+'% of spacing values sit on a 4px grid.':'–'}</p>`}
+function renderContrast(){const a=unhex($('#c1').value),b=unhex($('#c2').value),r=ratio(a,b);
+ const t=[['AA text',4.5],['AA large',3],['AAA text',7],['AAA large',4.5]];
+ const el=$('#cres');el.style.background=$('#c2').value;el.style.color=$('#c1').value;el.style.border='1px solid var(--line)';
+ el.innerHTML=`<strong>${r.toFixed(2)}:1</strong>The quick brown fox jumps over the lazy dog.<div class="pf" style="color:var(--ink)">${t.map(([n,v])=>`<span class="${r>=v?'y':'n'}" style="background:var(--panel)">${n} ${r>=v?'pass':'fail'}</span>`).join('')}</div>`}
+// ---------- run ----------
+const pv=$('#pv');
+function run(){
+ pv.style.width=$('#vp').value+'px';
+ let html=$('#src').value.trim();if(!html){$('#msg').textContent='Paste some markup first.';return}
+ if(!/<html|<body/i.test(html))html='<!DOCTYPE html><html lang="en"><head><title>Snippet</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>'+html+'</body></html>';
+ html=html.replace(/<script[\s\S]*?<\/script>/gi,'');
+ pv.onload=()=>{const d=pv.contentDocument,w=pv.contentWindow;
+  const s=d.createElement('style');s.textContent='[data-hl]{outline:3px solid #e8590c!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(232,89,12,.25)!important}';d.head.appendChild(s);
+  try{ISSUES=audit(d,w)}catch(e){console.error(e);$('#msg').textContent='Audit error: '+e.message;return}
+  renderScore(score(ISSUES));renderIssues();renderTokens();$('#msg').textContent='Audited '+d.querySelectorAll('body *').length+' elements at '+w.innerWidth+'px';
+  pv.style.height=Math.min(Math.max(d.documentElement.scrollHeight+4,240),640)+'px'};
+ pv.srcdoc=html}
+$('#run').onclick=run;$('#vp').onchange=run;
+$('#sample').onclick=()=>{$('#src').value=SAMPLE;run()};
+$('#file').onclick=()=>$('#fi').click();
+$('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('#src').value=r.result;run()};r.readAsText(f)};
+$('#copy').onclick=async()=>{const sc=score(ISSUES),json=JSON.stringify({score:sc,issues:ISSUES.map(({id,...r})=>r),tokens:TOKENS},null,2);
+ try{await navigator.clipboard.writeText(json);$('#msg').textContent='Report copied'}catch(e){const t=$('#src');t.value=json;t.select();$('#msg').textContent='Clipboard blocked — report placed in the box'}};
+$$('.tabs button').forEach(b=>b.onclick=()=>{$$('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));['issues','tokens','contrast','history'].forEach(t=>$('#t-'+t).hidden=t!==b.dataset.t);if(b.dataset.t==='contrast')renderContrast();if(b.dataset.t==='history')loadHistory()});
+$('#c1').oninput=$('#c2').oninput=renderContrast;
+$('#theme').onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dark?'light':'dark'};
+renderIssues();renderContrast();renderTokens();
+
+// ---------- backend integration ----------
+const api=async(u,o)=>{const r=await fetch(u,o),j=await r.json();if(!r.ok)throw new Error(j.error||r.status);return j};
+function showReport(j){ISSUES=j.issues;TOKENS=j.tokens;renderScore(j.score);renderIssues();renderTokens();
+ $('#msg').textContent=`Server engine · ${j.stats.elements} elements · report #${j.id}`}
+async function serverAudit(body){$('#msg').textContent='Auditing on server…';
+ try{const j=await api('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(j.html){pv.onload=null;$('#src').value=j.html;pv.style.width=$('#vp').value+'px';pv.srcdoc=j.html}
+  showReport(j)}catch(e){$('#msg').textContent='Error: '+e.message}}
+$('#asrv').onclick=()=>serverAudit({html:$('#src').value});
+$('#aurl').onclick=()=>{const u=$('#url').value.trim();if(u)serverAudit({url:u})};
+async function loadHistory(){const box=$('#t-history');
+ try{const rows=await api('/api/reports');
+  box.innerHTML=rows.length?rows.map(r=>`<div class="issue" style="cursor:default"><b>#${r.id} · score ${r.score}</b> <span class="mono" style="font-size:12px;color:var(--mute)">${r.issue_count} issues · ${new Date(r.created*1000).toLocaleString()}</span><small>${esc(r.title||'Untitled')} — ${esc(r.source.slice(0,80))}</small><div class="row" style="margin-top:6px"><button data-o="${r.id}">Open</button><a href="/api/reports/${r.id}/export" class="mono" style="font-size:12px">JSON</a><button data-d="${r.id}">Delete</button></div></div>`).join(''):'<div class="empty">No saved reports yet. Run a server audit to save one.</div>';
+  box.querySelectorAll('[data-o]').forEach(b=>b.onclick=async()=>{showReport(await api('/api/reports/'+b.dataset.o));$$('.tabs button')[0].click()});
+  box.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{await api('/api/reports/'+b.dataset.d,{method:'DELETE'});loadHistory()})
+ }catch(e){box.innerHTML='<div class="empty">History needs the Python backend: '+esc(e.message)+'</div>'}}
+$('#sample').click();
+</script>
+</body>
+</html>
